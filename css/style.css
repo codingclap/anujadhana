@@ -992,8 +992,8 @@ header {
   color: #fff;
   border: 2px solid #CA82F8; }
   .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
-    background: #d49af9 !important;
-    border-color: #d49af9 !important; }
+    background: #287db1 !important;
+    border-color: #287db1 !important; }
   .btn-primary.btn-outline {
     background: transparent;
     color: #4d4d4d;
@@ -1261,7 +1261,7 @@ input[type="text"] {
 
 .colorlib-social-icons i {
   font-size: 24px;
-  color: #CA82F8; }
+  color: #287db1; }
 
 #footer {
   padding: 8em 0;
