@@ -1,0 +1,167 @@
+<?php
+session_start();
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/config/db.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/model/Post.php';
+
+
+class PostController
+{
+    public $base_url = 'http://localhost/blog-system/';
+    private $post;
+
+    public function __construct($conn)
+    {
+        $this->post = new Post($conn);
+    }
+
+    // Display all posts
+    public function index()
+    {
+        $base_url = $this->base_url;
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Current page
+        $limit = 8;
+        $offset = ($page - 1) * $limit; // Offset for SQL query
+
+        $posts = $this->post->getAll($limit, $offset);
+        $totalPage = $this->post->getTotal();
+        require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/posts/index.php';
+    }
+
+    public function singlePost($id)
+    {
+        $base_url = $this->base_url;
+        $post = $this->post->getById($id);
+        if (!$post) {
+            die("Post not found!");
+        }
+
+        require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/posts/single.php';
+    }
+
+
+    // Show form to create a new post
+    public function create()
+    {
+        require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/posts/create.php';
+    }
+
+    // Store a new post
+    public function store()
+    {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $title = $_POST['title'];
+            $content = $_POST['content'];
+            $this->post->create($title, $content);
+            header('Location: index.php');
+        }
+    }
+
+    // Show form to edit a post
+    public function edit($id)
+    {
+        $post = $this->post->getById($id);
+        require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/posts/edit.php';
+    }
+
+    // Update a post
+    public function update($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $title = $_POST['title'];
+            $content = $_POST['content'];
+            $this->post->update($id, $title, $content);
+            header('Location: index.php');
+        }
+    }
+
+
+    // Delete a post
+    public function delete($id)
+    {
+        $this->post->delete($id);
+        header('Location: index.php');
+    }
+
+    // Search for posts
+    public function search()
+    {
+        $base_url = $this->base_url;
+        $keyword = isset($_POST['keyword']) ? $_POST['keyword'] : '';
+        if (isset($_POST['keyword'])) {
+            $_SESSION['keyword'] = $_POST['keyword'];
+        } else {
+            $_SESSION['keyword'];
+        }
+        // echo $_POST['keyword'];
+        $totalPage = $this->post->getTotalPosts($_SESSION['keyword']);
+        $posts = $this->post->search($_SESSION['keyword']);
+        require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/posts/search.php';
+    }
+
+    function loginForm()
+    {
+        $base_url = $this->base_url;
+        require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/login.php';
+    }
+
+    function verifyLogin($username, $password)
+    {
+        $base_url = $this->base_url;
+        $loginStatus = $this->post->loginAdmin($username, $password);
+        if ($loginStatus === true) {
+            header("Location:" . $base_url . 'index.php?action=dashboard');
+        } else {
+            require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/login.php';
+        }
+    }
+    function dashboard()
+    {
+        $base_url = $this->base_url;
+        if (isset($_SESSION['admin_id']) && !empty($_SESSION['username'])) {
+            require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/dashboard/index.php';
+        } else {
+            header("Location:" . $base_url . 'index.php?action=login');
+        }
+    }
+    function managePosts()
+    {
+        $base_url = $this->base_url;
+        if (isset($_SESSION['admin_id']) && !empty($_SESSION['username'])) {
+            require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/dashboard/manage-posts.php';
+        } else {
+            header("Location:" . $base_url . 'index.php?action=login');
+        }
+    }
+
+    function manageUser()
+    {
+        $base_url = $this->base_url;
+        if (isset($_SESSION['admin_id']) && !empty($_SESSION['username'])) {
+            require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/dashboard/manage-users.php';
+        } else {
+            header("Location:" . $base_url . 'index.php?action=login');
+        }
+    }
+
+    function manageComment()
+    {
+        $base_url = $this->base_url;
+        if (isset($_SESSION['admin_id']) && !empty($_SESSION['username'])) {
+            require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/dashboard/manage-comments.php';
+        } else {
+            header("Location:" . $base_url . 'index.php?action=login');
+        }
+    }
+
+    function addPost()
+    {
+        $base_url = $this->base_url;
+        $categories = $this->post->fetchCategory();
+        if (isset($_SESSION['admin_id']) && !empty($_SESSION['username'])) {
+            require $_SERVER['DOCUMENT_ROOT'] . '/blog-system/app/views/dashboard/add-post.php';
+        } else {
+            header("Location:" . $base_url . 'index.php?action=login');
+        }
+    }
+}
